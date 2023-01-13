@@ -1,0 +1,12 @@
+exp_id: NULL
+ref_txt: data/p326_split.txt
+ref_feature: data/p326_split_ref.csv
+ref_wavs: data/p326_split
+thre:
+  minppm: 0
+  maxppm: 2000
+  WER: 1.0
+  AUTOMOS: 3.0
+auth:
+  username: NULL
+  password: NULL
