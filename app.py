@@ -214,7 +214,6 @@ iface = gr.Interface(
         gr.Textbox(placeholder="Word Error Rate", label="Word Error Rate (The lower the better)"),
         gr.Plot(label="waveform")
     ],
-    title="Laronix Speech Recognition with AI",
     description=description,
     examples=examples,
     css=".body {background-color: green}",
