@@ -46,9 +46,9 @@ refs_ids = [x.split()[0] for x in refs]
 refs_txt = [" ".join(x.split()[1:]) for x in refs]
 ref_wavs = [str(x) for x in sorted(Path(config["ref_wavs"]).glob("**/*.wav"))]
 
-with open("src/description.html", "r", encoding="utf-8") as f:
-    description = f.read()
-# description
+# with open("src/description.html", "r", encoding="utf-8") as f:
+#     description = f.read()
+description = ""
 
 reference_id = gr.Textbox(
     value="ID", placeholder="Utter ID", label="Reference_ID"
