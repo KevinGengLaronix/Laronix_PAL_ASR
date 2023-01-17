@@ -196,7 +196,8 @@ def calc_wer(audio_path, ref):
         hypothesis_transform=transformation,
     )
     # pdb.set_trace()
-    return [trans, wer, token_wav_plot]
+    word_acc = 1.0 - float(wer)
+    return [trans, word_acc, token_wav_plot]
 # calc_wer(examples[1][0], examples[1][1])
 # pdb.set_trace()
 iface = gr.Interface(
@@ -211,11 +212,12 @@ iface = gr.Interface(
     ],
     outputs=[
         gr.Textbox(placeholder="Hypothesis", label="Recognition by AI"),
-        gr.Textbox(placeholder="Word Error Rate", label="Word Error Rate (The lower the better)"),
+        gr.Textbox(placeholder="Word Accuracy", label="Word Accuracy (The Higher the better)"),
         gr.Plot(label="waveform")
     ],
     description=description,
     examples=examples,
+    examples_per_page=20,
     css=".body {background-color: green}",
 )
 
