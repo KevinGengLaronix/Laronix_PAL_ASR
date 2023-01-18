@@ -13,7 +13,12 @@ import torch
 import torchaudio
 import gradio as gr
 from logging import PlaceHolder
-from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC, Wav2Vec2Model, Wav2Vec2CTCTokenizer
+from transformers import (
+    Wav2Vec2Processor,
+    Wav2Vec2ForCTC,
+    Wav2Vec2Model,
+    Wav2Vec2CTCTokenizer,
+)
 from transformers import AutoTokenizer, AutoFeatureExtractor, AutoModelForCTC
 from datasets import load_dataset
 import datasets
@@ -30,6 +35,7 @@ import sys
 
 from local.vis import token_plot
 from local.wer import get_WER_highlight
+
 sys.path.append("src")
 
 # Load automos
@@ -64,9 +70,7 @@ reference_PPM = gr.Textbox(
     placeholder="Pneumatic Voice's PPM", label="Ref PPM"
 )
 
-examples = [
-    [x, y] for x, y in zip(ref_wavs, refs_txt)
-]
+examples = [[x, y] for x, y in zip(ref_wavs, refs_txt)]
 
 # def map_to_array(batch):
 #     speech, _ = sf.read(batch["file"])
@@ -79,10 +83,14 @@ import pdb
 # Tokenlizer part
 # import model, feature extractor, tokenizer
 def TOKENLIZER(audio_path, activate_plot=False):
-    
-    token_model = AutoModelForCTC.from_pretrained("facebook/wav2vec2-base-960h")
+
+    token_model = AutoModelForCTC.from_pretrained(
+        "facebook/wav2vec2-base-960h"
+    )
     tokenizer = AutoTokenizer.from_pretrained("facebook/wav2vec2-base-960h")
-    feature_extractor = AutoFeatureExtractor.from_pretrained("facebook/wav2vec2-base-960h")
+    feature_extractor = AutoFeatureExtractor.from_pretrained(
+        "facebook/wav2vec2-base-960h"
+    )
 
     # # load first sample of English common_voice
     # dataset = load_dataset("common_voice", "en", split="train", streaming=True)
@@ -93,10 +101,12 @@ def TOKENLIZER(audio_path, activate_plot=False):
     # # forward sample through model to get greedily predicted transcription ids
     # input_values = feature_extractor(sample["audio"]["array"], return_tensors="pt").input_values
     # pdb.set_trace()
-    
+
     input_values, sr = torchaudio.load(audio_path)
     if sr != feature_extractor.sampling_rate:
-        input_values = torchaudio.functional.resample(input_values, sr, feature_extractor.sampling_rate)
+        input_values = torchaudio.functional.resample(
+            input_values, sr, feature_extractor.sampling_rate
+        )
 
     logits = token_model(input_values).logits[0]
     pred_ids = torch.argmax(logits, axis=-1)
@@ -105,7 +115,10 @@ def TOKENLIZER(audio_path, activate_plot=False):
     outputs = tokenizer.decode(pred_ids, output_word_offsets=True)
     # pdb.set_trace()
     # compute `time_offset` in seconds as product of downsampling ratio and sampling_rate
-    time_offset = token_model.config.inputs_to_logits_ratio / feature_extractor.sampling_rate
+    time_offset = (
+        token_model.config.inputs_to_logits_ratio
+        / feature_extractor.sampling_rate
+    )
 
     word_offsets = [
         {
@@ -116,9 +129,13 @@ def TOKENLIZER(audio_path, activate_plot=False):
         for d in outputs.word_offsets
     ]
     if activate_plot == True:
-        token_fig = token_plot(input_values, feature_extractor.sampling_rate, word_offsets)
+        token_fig = token_plot(
+            input_values, feature_extractor.sampling_rate, word_offsets
+        )
         return word_offsets, token_fig
     return word_offsets
+
+
 # TOKENLIZER("data/samples/p326_020.wav")
 
 # pdb.set_trace()
@@ -145,6 +162,7 @@ transformation = jiwer.Compose(
 )
 ()
 
+
 class ChangeSampleRate(nn.Module):
     def __init__(self, input_rate: int, output_rate: int):
         super().__init__()
@@ -165,7 +183,9 @@ class ChangeSampleRate(nn.Module):
         )
         return output
 
+
 # Flagging setup
+
 
 def calc_wer(audio_path, ref):
     wav, sr = torchaudio.load(audio_path)
@@ -178,11 +198,11 @@ def calc_wer(audio_path, ref):
     out_wavs = csr(wav)
     # ASR
     # trans = jiwer.ToUpperCase()(p(audio_path)["text"])
-    
+
     # Tokenlizer
     tokens, token_wav_plot = TOKENLIZER(audio_path, activate_plot=True)
     # ASR part
-    
+
     trans_cnt = []
     for i in tokens:
         word, start_time, end_time = i.values()
@@ -199,11 +219,11 @@ def calc_wer(audio_path, ref):
         truth_transform=transformation,
         hypothesis_transform=transformation,
     )
-    # pdb.set_trace()
-    word_acc = "%0.2f%%" %((1.0 - float(wer))*100)
+    word_acc = "%0.2f%%" % ((1.0 - float(wer)) * 100)
     return [highlight_hyp, word_acc, token_wav_plot]
+
+
 # calc_wer(examples[1][0], examples[1][1])
-# # calc_wer()
 # pdb.set_trace()
 
 iface = gr.Interface(
@@ -213,15 +233,23 @@ iface = gr.Interface(
             source="upload",
             type="filepath",
             label="Audio_to_evaluate",
-            show_label=False
+            show_label=False,
         ),
         reference_textbox,
     ],
-    #gr.Textbox(placeholder="Hypothesis", label="Recognition by AI"),
     outputs=[
-        gr.HighlightedText(placeholder="Hypothesis", label="Diff", combine_adjacent=True, adjacent_separator=" ", show_label=False).style(color_map={"1": "#78bd91", "0": "#ddbabf"}),
-        gr.Textbox(placeholder="Word Accuracy", label="Word Accuracy (The Higher the better)"),
-        gr.Plot(label="waveform", show_label=False)
+        gr.HighlightedText(
+            placeholder="Hypothesis",
+            label="Diff",
+            combine_adjacent=True,
+            adjacent_separator=" ",
+            show_label=False,
+        ).style(color_map={"1": "#78bd91", "0": "#ddbabf"}),
+        gr.Textbox(
+            placeholder="Word Accuracy",
+            label="Word Accuracy (The Higher the better)",
+        ),
+        gr.Plot(label="waveform", show_label=False),
     ],
     description=description,
     examples=examples,
